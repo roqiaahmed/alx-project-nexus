@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  db:
+    container_name: db
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: ${PG_DB}
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    env_file:
+      - .env
+
+
+  web:
+    build: .
+    container_name: social_media_app
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    environment:
+      DATABASE_USERNAME: ${PG_USER}
+      DATABASE_PASSWORD: ${PG_PASSWORD}
+      DATABASE_NAME: ${PG_DB}
+      DATABASE_PORT: ${PG_PORT}
+      DATABASE_HOST: ${PG_HOST}
+    env_file:
+      - .env
+
+  migrate:
+    build: .
+    command: python manage.py migrate
+    depends_on:
+      - db
+volumes:
+  pgdata:
+    name: social_media_data
+
