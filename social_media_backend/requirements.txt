@@ -8,11 +8,16 @@ graphene-django==3.2.3
 graphql-core==3.2.6
 graphql-relay==3.2.0
 gunicorn==23.0.0
+iniconfig==2.1.0
 packaging==25.0
+pluggy==1.6.0
 promise==2.3
 psycopg==3.2.10
 psycopg2-binary==2.9.10
+Pygments==2.19.2
 PyJWT==2.10.1
+pytest==8.4.2
+pytest-django==4.11.1
 python-dateutil==2.9.0.post0
 Rx==1.6.3
 singledispatch==4.1.2

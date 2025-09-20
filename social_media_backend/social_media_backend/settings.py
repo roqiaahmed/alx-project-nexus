@@ -42,11 +42,10 @@ INSTALLED_APPS = [
     # installed_apps
     "graphene_django",
     "graphql_jwt",
-    # "graphql_jwt.refresh_token.apps.RefreshTokenConfig",
-    # "graphql_auth",
     # local_apps
     "core",
     "users",
+    "posts",
 ]
 
 MIDDLEWARE = [
@@ -63,7 +62,7 @@ GRAPHQL_JWT = {
     "JWT_VERIFY_EXPIRATION": True,
     "JWT_LONG_RUNNING_REFRESH_TOKEN": True,
     "JWT_AUTH_HEADER_PREFIX": "Bearer",
-    "JWT_EXPIRATION_DELTA": timedelta(minutes=10),
+    "JWT_EXPIRATION_DELTA": timedelta(hours=10),
     "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days=7),
     "JWT_SECRET_KEY": SECRET_KEY,
     "JWT_ALGORITHM": "HS256",
