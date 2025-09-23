@@ -63,6 +63,42 @@ class CreateComment(graphene.Mutation):
         return CreateComment(comment)
 
 
+class UpdateComment(graphene.Mutation):
+    comment = graphene.Field(CommentType)
+
+    class Arguments:
+        id = graphene.ID(required=True)
+        content = graphene.String(required=True)
+
+    def mutate(self, info, id, content):
+        user = info.context.user
+        comment = Comment.objects.get(id=id)
+
+        if comment.user != user:
+            raise Exception("You cannot update someone else’s comment")
+
+        comment.content_text = content
+        comment.save()
+        return UpdateComment(comment=comment)
+
+
+class DeleteComment(graphene.Mutation):
+    ok = graphene.Boolean()
+
+    class Arguments:
+        id = graphene.ID(required=True)
+
+    def mutate(self, info, id):
+        user = info.context.user
+        comment = Comment.objects.get(id=id)
+
+        if comment.user != user:
+            raise Exception("You cannot delete someone else’s comment")
+
+        comment.delete()
+        return DeleteComment(ok=True)
+
+
 class CreatePost(graphene.Mutation):
     class Arguments:
         content = graphene.String(required=True)
@@ -77,6 +113,47 @@ class CreatePost(graphene.Mutation):
         return CreatePost(post=post)
 
 
+class UpdatePost(graphene.Mutation):
+    post = graphene.Field(PostType)
+
+    class Arguments:
+        id = graphene.ID(required=True)
+        content = graphene.String(required=True)
+
+    def mutate(self, info, id, content):
+        user = info.context.user
+        if not user.is_authenticated:
+            raise Exception("Authentication credentials were not provided")
+
+        post = Post.objects.get(id=id)
+
+        if post.author != user:
+            raise Exception("You cannot update someone else’s post")
+
+        if content == "":
+            raise Exception("content must not be empyt")
+        post.content_text = content
+        post.save()
+        return UpdatePost(post=post)
+
+
+class DeletePost(graphene.Mutation):
+    ok = graphene.Boolean()
+
+    class Arguments:
+        id = graphene.ID(required=True)
+
+    def mutate(self, info, id):
+        user = info.context.user
+        post = Post.objects.get(id=id)
+
+        if post.author != user:
+            raise Exception("You cannot delete someone else’s post")
+
+        post.delete()
+        return DeletePost(ok=True)
+
+
 class PostQuery(graphene.ObjectType):
     all_posts = graphene.List(PostType)
     posts_by_user = graphene.List(PostType, user_id=graphene.ID(required=True))
@@ -89,6 +166,15 @@ class PostQuery(graphene.ObjectType):
 
 
 class PostMutation(graphene.ObjectType):
+    # Create
     create_post = CreatePost.Field()
     create_comment = CreateComment.Field()
     create_reaction = CreateReaction.Field()
+
+    # Update
+    update_post = UpdatePost.Field()
+    update_comment = UpdateComment.Field()
+
+    # Delete
+    delete_post = DeletePost.Field()
+    delete_comment = DeleteComment.Field()

@@ -2,11 +2,17 @@ import json
 import pytest
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from rest_framework.test import APIClient
 
 
 @pytest.fixture
 def graphql_url():
     return reverse("graphql")
+
+
+@pytest.fixture
+def api_client():
+    return APIClient()
 
 
 @pytest.fixture

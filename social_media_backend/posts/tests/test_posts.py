@@ -1,5 +1,8 @@
 import json
+import pytest
 from django.contrib.auth import get_user_model
+from core.schema import schema
+from posts.models import Post, Comment
 
 User = get_user_model()
 
@@ -119,6 +122,104 @@ def test_query_me_posts(
     assert posts[0]["contentText"] == "personal post"
 
 
+@pytest.mark.django_db
+def test_owner_can_update_own_post(api_client, graphql_url, create_post):
+    post_id, headers, email = create_post("original content", email="owner@example.com")
+    update_mutation = f"""
+    mutation {{
+        updatePost(id: {post_id}, content: "updated content") {{
+            post {{ id contentText }}
+        }}
+    }}
+    """
+
+    resp = api_client.post(
+        graphql_url, data={"query": update_mutation}, format="json", **headers
+    )
+    data = resp.json()
+    assert "errors" not in data
+    assert data["data"]["updatePost"]["post"]["contentText"] == "updated content"
+
+
+@pytest.mark.django_db
+def test_user_cannot_update_another_users_post(
+    api_client, graphql_url, create_user, create_post, get_jwt_token
+):
+    post_id, _, _ = create_post("original content", email="owner@example.com")
+
+    # another user tries to update it
+    create_user(email="other@example.com", password="StrongPass123!")
+    token = get_jwt_token("other@example.com", "StrongPass123!")
+    headers = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    update_mutation = f"""
+    mutation {{
+        updatePost(id: {post_id}, content: "hacked content") {{
+            post {{
+                id
+                contentText
+            }}
+        }}
+    }}
+    """
+
+    resp = api_client.post(
+        graphql_url, data={"query": update_mutation}, format="json", **headers
+    )
+    data = resp.json()
+    print(data)
+    assert "errors" in data
+    assert data["errors"][0]["message"] == "You cannot update someone else’s post"
+
+
+@pytest.mark.django_db
+def test_owner_can_delete_own_post(api_client, graphql_url, create_user, create_post):
+    post_id, headers, _ = create_post("delete me", email="owner@example.com")
+    delete_mutation = f"""
+    mutation {{
+        deletePost(id: {post_id}) {{
+            ok
+        }}
+    }}
+    """
+
+    resp = api_client.post(
+        graphql_url, data={"query": delete_mutation}, format="json", **headers
+    )
+    data = resp.json()
+    assert "errors" not in data
+    assert data["data"]["deletePost"]["ok"] is True
+
+
+@pytest.mark.django_db
+def test_user_cannot_delete_another_users_post(
+    api_client, graphql_url, create_user, create_post, get_jwt_token
+):
+
+    # create post
+    post_id, _, _ = create_post("delete me", email="owner@example.com")
+
+    # other user tries to delete
+    create_user(email="other@example.com", password="StrongPass123!")
+    token = get_jwt_token("other@example.com", "StrongPass123!")
+    headers = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    delete_mutation = f"""
+    mutation {{
+        deletePost(id: {post_id}) {{
+            ok
+        }}
+    }}
+    """
+
+    resp = api_client.post(
+        graphql_url, data={"query": delete_mutation}, format="json", **headers
+    )
+    data = resp.json()
+    assert "errors" in data
+    assert data["data"]["deletePost"] is None
+
+
 def test_create_comment_with_auth_user(
     client, graphql_url, create_comment_mutation, create_post
 ):
@@ -162,3 +263,148 @@ def test_create_reaction_with_auth_user(
     assert data["data"]["createReaction"]["reaction"]["states"] == "LIKE"
     assert data["data"]["createReaction"]["reaction"]["user"]["email"] == email
     assert data["data"]["createReaction"]["reaction"]["post"]["id"] == post_id
+
+
+@pytest.mark.django_db
+def test_user_cannot_update_another_users_comment(
+    api_client, graphql_url, create_post, get_jwt_token, create_user
+):
+
+    # create post
+    post_id, headers, _ = create_post("hello", email="owner@example.com")
+
+    # create comment
+    comment_mutation = f"""
+    mutation {{
+        createComment(post: {post_id}, contentText: "original comment") {{
+            comment {{
+                id
+                contentText
+            }}
+        }}
+    }}
+    """
+    resp = api_client.post(
+        graphql_url, data={"query": comment_mutation}, format="json", **headers
+    )
+    comment_id = resp.json()["data"]["createComment"]["comment"]["id"]
+    create_user(email="other@example.com", password="StrongPass123!")
+    token = get_jwt_token("other@example.com", "StrongPass123!")
+    headers = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+    update_comment_mutation = f"""
+    mutation {{
+        updateComment(id: {comment_id}, content: "hacked comment") {{
+            comment {{
+                id
+                contentText
+            }}
+        }}
+    }}
+    """
+
+    resp = api_client.post(
+        graphql_url, data={"query": update_comment_mutation}, format="json", **headers
+    )
+    data = resp.json()
+    assert "errors" in data
+    assert data["data"]["updateComment"] is None
+    assert data["errors"][0]["message"] == "You cannot update someone else’s comment"
+
+
+@pytest.mark.django_db
+def test_owner_can_update_own_comment(
+    api_client, create_comment_mutation, graphql_url, create_post
+):
+
+    post_id, headers, _ = create_post("hello", email="owner@example.com")
+
+    comment_mutation = create_comment_mutation("my first comment", post_id=post_id)
+    resp = api_client.post(
+        graphql_url, data={"query": comment_mutation}, format="json", **headers
+    )
+    comment_id = resp.json()["data"]["createComment"]["comment"]["id"]
+    update_comment_mutation = f"""
+    mutation {{
+        updateComment(id: {comment_id}, content: "updated comment") {{
+            comment {{ id contentText }}
+        }}
+    }}
+    """
+    resp = api_client.post(
+        graphql_url, data={"query": update_comment_mutation}, format="json", **headers
+    )
+    data = resp.json()
+    assert "errors" not in data
+    assert data["data"]["updateComment"]["comment"]["contentText"] == "updated comment"
+
+
+@pytest.mark.django_db
+def test_user_cannot_delete_another_users_comment(
+    api_client, graphql_url, create_user, create_post, get_jwt_token
+):
+
+    post_id, headers, _ = create_post("hello", email="owner@example.com")
+
+    comment_mutation = f"""
+    mutation {{
+        createComment(post: {post_id}, contentText: "original comment") {{
+            comment {{ id contentText }}
+        }}
+    }}
+    """
+    resp = api_client.post(
+        graphql_url, data={"query": comment_mutation}, format="json", **headers
+    )
+    comment_id = resp.json()["data"]["createComment"]["comment"]["id"]
+
+    # other user tries to delete
+    create_user(email="other@example.com", password="StrongPass123!")
+    token = get_jwt_token("other@example.com", "StrongPass123!")
+    headers = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    delete_comment_mutation = f"""
+    mutation {{
+        deleteComment(id: {comment_id}) {{
+            ok
+        }}
+    }}
+    """
+    resp = api_client.post(
+        graphql_url, data={"query": delete_comment_mutation}, format="json", **headers
+    )
+    data = resp.json()
+    assert "errors" in data
+    assert data["data"]["deleteComment"] is None
+    assert data["errors"][0]["message"] == "You cannot delete someone else’s comment"
+
+
+@pytest.mark.django_db
+def test_owner_can_delete_own_comment(api_client, graphql_url, create_post):
+
+    post_id, headers, _ = create_post("hello", email="owner@example.com")
+
+    comment_mutation = f"""
+    mutation {{
+        createComment(post: {post_id}, contentText: "original comment") {{
+            comment {{ id contentText }}
+        }}
+    }}
+    """
+    resp = api_client.post(
+        graphql_url, data={"query": comment_mutation}, format="json", **headers
+    )
+    comment_id = resp.json()["data"]["createComment"]["comment"]["id"]
+
+    delete_comment_mutation = f"""
+    mutation {{
+        deleteComment(id: {comment_id}) {{
+            ok
+        }}
+    }}
+    """
+    resp = api_client.post(
+        graphql_url, data={"query": delete_comment_mutation}, format="json", **headers
+    )
+    data = resp.json()
+    assert "errors" not in data
+    assert data["data"]["deleteComment"]["ok"] is True
