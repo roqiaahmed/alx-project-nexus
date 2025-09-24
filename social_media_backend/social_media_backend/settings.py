@@ -27,9 +27,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-g0uqx04w0yphu48ql_--5x86_l07^&f+b#!@)n&aq)yybzebpz"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = True
+DEBUG = True
 
-ALLOWED_HOSTS = ["alx-project-nexus-production-a8d3.up.railway.app"]
+ALLOWED_HOSTS = ["127.0.0.1", ".railway.app", "localhost"]
 
 
 # Application definition
@@ -103,7 +103,19 @@ WSGI_APPLICATION = "social_media_backend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": os.environ.get("DB_DRIVER", "django.db.backends.postgresql"),
+#         "USER": os.environ.get("PG_USER", "postgres"),
+#         "PASSWORD": os.environ.get("PG_PASSWORD", "postgres"),
+#         "NAME": os.environ.get("PG_DB", "postgres"),
+#         "PORT": os.environ.get("PG_PORT", "5432"),
+#         "HOST": os.environ.get("PG_HOST", "localhost"),
+#     }
+# }
+
 if "DATABASE_URL" in os.environ:  # Railway
+    print("from Railway")
     DATABASES = {
         "default": dj_database_url.config(
             default=os.environ["DATABASE_URL"],
@@ -112,6 +124,7 @@ if "DATABASE_URL" in os.environ:  # Railway
         )
     }
 else:  # Local dev (with Docker or .env)
+    print("from Docker")
     DATABASES = {
         "default": {
             "ENGINE": os.environ.get("DB_DRIVER", "django.db.backends.postgresql"),
