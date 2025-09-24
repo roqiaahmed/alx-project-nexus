@@ -21,7 +21,7 @@ services:
     build: .
     container_name: social_media_app
     ports:
-      - "8000:8000"
+      - "80:80"
     volumes:
       - .:/app
     depends_on:
