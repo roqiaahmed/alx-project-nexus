@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from datetime import timedelta
+import dj_database_url
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-g0uqx04w0yphu48ql_--5x86_l07^&f+b#!@)n&aq)yybzebpz"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -101,16 +103,25 @@ WSGI_APPLICATION = "social_media_backend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": os.environ.get("DB_DRIVER", "django.db.backends.postgresql"),
-        "USER": os.environ.get("PG_USER", "postgres"),
-        "PASSWORD": os.environ.get("PG_PASSWORD", "postgres"),
-        "NAME": os.environ.get("PG_DB", "postgres"),
-        "PORT": os.environ.get("PG_PORT", "5432"),
-        "HOST": os.environ.get("PG_HOST", "localhost"),
+if "DATABASE_URL" in os.environ:  # Railway
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=os.environ["DATABASE_URL"],
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
-}
+else:  # Local dev (with Docker or .env)
+    DATABASES = {
+        "default": {
+            "ENGINE": os.environ.get("DB_DRIVER", "django.db.backends.postgresql"),
+            "USER": os.environ.get("PG_USER", "postgres"),
+            "PASSWORD": os.environ.get("PG_PASSWORD", "postgres"),
+            "NAME": os.environ.get("PG_DB", "postgres"),
+            "PORT": os.environ.get("PG_PORT", "5432"),
+            "HOST": os.environ.get("PG_HOST", "localhost"),
+        }
+    }
 
 
 # Password validation
