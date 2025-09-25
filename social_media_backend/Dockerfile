@@ -36,4 +36,4 @@ EXPOSE 8000
 RUN python manage.py collectstatic --noinput
 
 # Run Gunicorn instead of runserver
-CMD ["gunicorn", "social_media_backend.wsgi:application", "--bind", "0.0.0.0:${PORT}"]
+CMD ["sh", "-c", "gunicorn social_media_backend.wsgi:application --bind 0.0.0.0:$PORT --workers=3 --threads=2 --timeout=120"]
