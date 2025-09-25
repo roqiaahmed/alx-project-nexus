@@ -21,7 +21,7 @@ services:
     build: .
     container_name: social_media_app
     ports:
-      - "80:80"
+      - "8000:8000"
     volumes:
       - .:/app
     depends_on:
@@ -34,7 +34,7 @@ services:
       DATABASE_HOST: ${PG_HOST}
     env_file:
       - .env
-
+    command: sh -c "python manage.py migrate && gunicorn social_media_backend.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 2 --timeout 120"
   migrate:
     build: .
     command: python manage.py migrate

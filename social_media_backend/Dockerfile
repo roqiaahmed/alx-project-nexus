@@ -26,10 +26,14 @@ RUN pip install -r requirements.txt
 COPY . /app/
 
 # Expose the Django port
-EXPOSE 80
-
+# EXPOSE 80
+EXPOSE 8000
 # Run Django’s development server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:80"]
+# CMD ["python", "manage.py", "runserver", "0.0.0.0:80"]
+
+
+# Collect static files
+RUN python manage.py collectstatic --noinput
 
 # Run Gunicorn instead of runserver
-# CMD ["gunicorn", "social_media_backend.wsgi:application", "--bind", "0.0.0.0:${PORT}"]
+CMD ["gunicorn", "social_media_backend.wsgi:application", "--bind", "0.0.0.0:${PORT}"]
