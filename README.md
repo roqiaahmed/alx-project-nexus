@@ -1,75 +1,100 @@
-# ProDev Backend Engineering Program
+# 🌐 Social Media Backend
 
-This repository documents my journey and learnings from the **ProDev Backend Engineering Program**.  
-The program focused on building strong backend development skills, exploring modern technologies, and applying best practices through hands-on projects.
+This is a **Django + GraphQL** social media backend project built with **Docker**.  
+It supports user registration, authentication, posts, comments, and reactions.
 
----
-
-## 📚 Overview
-
-The program provided practical training on:
-
-- Core backend development concepts
-- Modern frameworks and tools
-- Software engineering best practices
-- Real-world project implementation
+The project is part of the **[ALX Project Nexus](https://github.com/roqiaahmed/alx-project-nexus.git)** repository.
 
 ---
 
-## 🛠️ Key Technologies Covered
+## 📂 Project Structure
 
-- **Python** – foundational backend programming language
-- **Django** – full-featured web framework
-- **REST APIs** – designing and building robust APIs
-- **GraphQL** – flexible and efficient API querying
-- **Docker** – containerization and environment consistency
-- **CI/CD** – continuous integration and deployment pipelines
-
----
-
-## 💡 Important Backend Development Concepts
-
-1. **Database Design**
-
-   - Modeling entities and relationships
-   - Using migrations for schema evolution
-
-2. **Asynchronous Programming**
-
-   - Handling background tasks with Celery
-   - Improving performance with async views
-
-3. **Caching Strategies**
-   - Redis for in-memory caching
-   - Query optimization and response speed-up
+alx-project-nexus/
+│── social_media_backend/ # Main Django project
+│ ├── users/ # Users app
+│ ├── posts/ # Posts app
+│ ├── core/ # Core schema
+| |── social_media_backend # settings
+│ └── ...
+│── docker-compose.yml
+│── Dockerfile
+│── README.md
 
 ---
 
-## 🚧 Challenges Faced & Solutions
-
-- **Challenge:** Managing complex database relationships  
-  **Solution:** Applied normalization techniques and careful use of `ForeignKey` and `ManyToMany` fields
-
-- **Challenge:** Debugging async tasks and workers  
-  **Solution:** Used structured logging and monitoring tools to trace task execution
-
-- **Challenge:** Containerizing development and production environments  
-  **Solution:** Standardized Docker configurations with `docker-compose` for local development and deployment
+- [Users App README.md](https://github.com/roqiaahmed/alx-project-nexus/blob/main/social_media_backend/users/README.md)
+- [Posts App README.md](https://github.com/roqiaahmed/alx-project-nexus/blob/main/social_media_backend/posts/README.md)
 
 ---
 
-## ✅ Best Practices & Personal Takeaways
+## 🚀 Getting Started
 
-- Write clean, modular, and well-documented code
-- Always design APIs with scalability and maintainability in mind
-- Use automated tests to ensure code reliability
-- Treat logs and monitoring as essential, not optional
-- Continuous learning is key: backend engineering is constantly evolving
+### 1️⃣ Clone the Repository
+
+```bash
+git clone https://github.com/roqiaahmed/alx-project-nexus.git
+cd alx-project-nexus/social_media_backend
+```
+
+create .env file with:
+
+```bash
+DJANGO_SECRET_KEY= #your django secret key
+DB_DRIVER="django.db.backends.postgresql"
+PG_DB=social_media # Datebase name
+PG_USER=postgres # Datebase user
+PG_PASSWORD=password # Datebase password
+PG_HOST=db # db for docker. without docker use "localhost"
+PG_PORT=5432 # Datebase port
+```
+
+### 2️⃣ Run with Docker
+
+- Build and start the containers:
+
+```bash
+docker-compose up --build
+```
+
+### 3️⃣ Make Migrations
+
+- Inside the container, run:
+
+```bash
+docker-compose exec web python manage.py makemigrations users
+docker-compose exec web python manage.py makemigrations posts
+```
+
+### 4️⃣ Apply Migrations
+
+- Inside the container, run:
+
+```bash
+docker-compose exec web python manage.py migrate
+```
 
 ---
 
-## 📌 Next Steps
+## Running Tests
 
-- Deepen knowledge of distributed systems
-- Explore advanced CI/CD workflows
-- Contribute to open-source backend projects
+Run all tests inside the container:
+
+```bash
+docker-compose exec web pytest
+```
+
+---
+
+## 📌 Apps Included
+
+- ➡️ [Users App](https://github.com/roqiaahmed/alx-project-nexus/blob/main/social_media_backend/users/README.md): Handles registration, login (JWT), and profiles.
+
+- ➡️ [Posts App](https://github.com/roqiaahmed/alx-project-nexus/blob/main/social_media_backend/posts/README.md) : Handles posts, comments, and reactions.
+
+---
+
+### ⚡ Notes
+
+- Uses JWT Authentication (graphql-jwt) for login and authorization.
+- Designed for GraphQL-first development.
+- Extendable to add more social media features (follows, etc).
